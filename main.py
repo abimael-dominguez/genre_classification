@@ -1,3 +1,10 @@
+"""
+Commands to run:
+
+    mlflow run .
+    mlflow run . -P hydra_options="main.project_name=genre_classification_prod"
+"""
+
 import mlflow
 import os
 import hydra
@@ -15,12 +22,15 @@ def go(config: DictConfig):
     # You can get the path at the root of the MLflow project with this:
     root_path = hydra.utils.get_original_cwd()
 
+    import omegaconf
+    print(config["main"]["execute_steps"], type(config["main"]["execute_steps"]))
+
     # Check which steps we need to execute
     if isinstance(config["main"]["execute_steps"], str):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
+        assert isinstance(config["main"]["execute_steps"], (list, omegaconf.listconfig.ListConfig))
         steps_to_execute = config["main"]["execute_steps"]
 
     # Download step
@@ -75,7 +85,7 @@ def go(config: DictConfig):
             "artifact_root": "data",
             "artifact_type": "segregated_data",
             "test_size": config["data"]["test_size"],
-            "startify": config["data"]["stratify"]
+            "stratify": config["data"]["stratify"]
             }
         )
 
@@ -94,7 +104,7 @@ def go(config: DictConfig):
             parameters={
                 "train_data": "data_train.csv:latest",
                 "model_config": model_config,
-                "export_artifact": config["ramndom_forest_pipeline"]["export_artifact"],
+                "export_artifact": config["random_forest_pipeline"]["export_artifact"],
                 "random_seed": config["main"]["random_seed"],
                 "val_size": config["data"]["test_size"],
                 "stratify": config["data"]["stratify"]
